@@ -2,20 +2,41 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 EPS = 1e-3
 
-def multiscale_norm(x,minimum_size=8, type='mean'):
+def do_nothing(x):
+    return x
+
+def solar_norm(x,minimum_size=8, maximum_size=80, normType='mean', post=lambda x: np.arctan(0.7*x),
+    gamma=3.5, alpha=0.5):
+
+    z = multiscale_norm(x,minimum_size,maximum_size,normType,post)
+
+    a0 = np.amin(x)
+    a1 = np.amax(x)
+
+    im_proc = 2*((1.0*x-a0)/(a1-a0))**gamma-1
+
+    im = alpha*im_proc+(1-alpha)*z
+    return im.copy()
+
+def multiscale_norm(x,minimum_size=4, maximum_size=40, normType='mean', post=do_nothing):
     images = []
-    size = np.amin(x.shape)
+    size = maximum_size
     while size >= minimum_size:
         norm_im = window_norm(x,window_size=size)
+        norm_im = post(norm_im)
 
         images.append(norm_im)
 
         size = size/2
 
-    avg_image = np.zeros(x.shape)
-    for im in images: avg_image+=im/len(images)
+    if normType == 'mean':
+        avg_image = np.zeros(x.shape)
+        for im in images: avg_image+=im/len(images)
+        return avg_image.copy()
 
-    return avg_image.copy()
+    elif normType == 'max':
+        stack = np.amax(np.array(images),axis=0)
+        return stack
 
 # def window_norm(x,window_size):
 #     counts = np.zeros(x.shape)

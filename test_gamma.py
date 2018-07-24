@@ -3,18 +3,19 @@ import numpy as np
 from scipy.ndimage import imread
 import matplotlib.pyplot as plt
 
-MIN_SCALE = 5
-MAX_SCALE = 100
+GAMMA = 3.5
+
 #im = imread('./city_small.jpeg', flatten=True)
 im = np.load('./cab/192.npy')
-size = np.amin(im.shape)
+a0 = np.amin(im)
+a1 = np.amax(im)
 
-z = multiscale_norm(im, minimum_size=MIN_SCALE,
-maximum_size=MAX_SCALE, normType='mean', post=lambda x: np.arctan(0.7*x))
+im_proc = 2*((1.0*im-a0)/(a1-a0))**GAMMA-1
+
 
 plt.figure()
-plt.imshow(z, cmap='gray')
+plt.imshow(im_proc, cmap='gray')
 plt.title('average')
 plt.colorbar()
-plt.savefig('./multiscale_norm.jpg',dpi=500)
+plt.savefig('./gamma_norm.jpg',dpi=500)
 plt.close()
